@@ -1,3 +1,3 @@
 "use strict";
 
-exports.MswConfig = require("./lib/msw-config");
+module.exports = require("./lib/msw-config");

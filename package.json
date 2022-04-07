@@ -6,6 +6,9 @@
   "scripts": {
     "test": "yarn"
   },
+  "devDependencies": {
+    "msw": "^0.39.2"
+  },
   "peerDependancies": {
     "msw": "^0.39.2"
   },
