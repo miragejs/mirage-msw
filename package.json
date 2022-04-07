@@ -1,0 +1,11 @@
+{
+  "name": "mirage-msw",
+  "version": "0.0.1",
+  "description": "Allow mirage to use MSW as the interceptor",
+  "main": "index.js",
+  "scripts": {
+    "test": "yarn"
+  },
+  "author": "Brian Gantzler",
+  "license": "ISC"
+}
