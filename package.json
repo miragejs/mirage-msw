@@ -6,6 +6,9 @@
   "scripts": {
     "test": "yarn"
   },
+  "peerDependancies": {
+    "msw": "^0.39.2"
+  },
   "author": "Brian Gantzler",
   "license": "ISC"
 }
