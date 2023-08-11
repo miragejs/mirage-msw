@@ -3,6 +3,7 @@
   "version": "0.1.1",
   "description": "Allow mirage to use MSW (Mock Service Worker) as the interceptor",
   "main": "index.js",
+  "type": "module",
   "keywords": [
     "msw",
     "prototype",
