@@ -11,8 +11,8 @@
   ],
   "scripts": {
     "test": "yarn",
-    "format": "yarn prettier --write .",
-    "format:check": "yarn prettier --check ."
+    "format": "pnpm prettier --write .",
+    "format:check": "pnpm prettier --check ."
   },
   "devDependencies": {
     "miragejs": "~0.1.43",
@@ -24,5 +24,6 @@
     "msw": "^0.39.2"
   },
   "author": "Brian Gantzler",
-  "license": "MIT"
+  "license": "MIT",
+  "packageManager": "pnpm@8.6.12"
 }
