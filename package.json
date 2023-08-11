@@ -10,11 +10,14 @@
     "testing"
   ],
   "scripts": {
-    "test": "yarn"
+    "test": "yarn",
+    "format": "yarn prettier --write .",
+    "format:check": "yarn prettier --check ."
   },
   "devDependencies": {
     "miragejs": "~0.1.43",
-    "msw": "^0.39.2"
+    "msw": "^0.39.2",
+    "prettier": "^3.0.1"
   },
   "peerDependancies": {
     "miragejs": "~0.1.43",
