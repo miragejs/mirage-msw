@@ -5,8 +5,9 @@ import {
   type RestRequest,
   type SetupWorkerApi,
 } from 'msw';
+import PassthroughRegistry from './passthrough-registry';
 import type { Server } from 'miragejs';
-import type { RouteHandler, ServerConfig } from 'miragejs/server';
+import type { HTTPVerb, RouteHandler, ServerConfig } from 'miragejs/server';
 import type { AnyFactories, AnyModels, AnyRegistry } from 'miragejs/-types';
 
 type RawHandler = RouteHandler<AnyRegistry> | {};
@@ -15,15 +16,6 @@ type ResponseCode = number;
 
 /** code, headers, serialized response */
 type ResponseData = [ResponseCode, { [k: string]: string }, string | undefined];
-
-type HTTPVerb =
-  | 'get'
-  | 'put'
-  | 'post'
-  | 'patch'
-  | 'delete'
-  | 'options'
-  | 'head';
 
 /** e.g. "/movies/:id" */
 type Shorthand = string;
@@ -51,6 +43,8 @@ type MirageServer = {
     customizedCode?: ResponseCode,
     options?: unknown
   ) => (request: RestRequest) => ResponseData | PromiseLike<ResponseData>;
+
+  shouldLog: () => boolean;
 
   get?: BaseHandler;
   post?: BaseHandler;
@@ -141,6 +135,8 @@ export default class MswConfig {
 
   handlers: RestHandler[] = [];
 
+  private passthroughs;
+
   get?: BaseHandler;
   post?: BaseHandler;
   put?: BaseHandler;
@@ -149,6 +145,10 @@ export default class MswConfig {
   patch?: BaseHandler;
   head?: BaseHandler;
   options?: BaseHandler;
+
+  constructor() {
+    this.passthroughs = new PassthroughRegistry();
+  }
 
   create(
     server: MirageServer,
@@ -409,12 +409,76 @@ export default class MswConfig {
     return fullPath;
   }
 
+  passthrough(...args: (string | HTTPVerb[])[]) {
+    let verbs: HTTPVerb[] = [
+      'get',
+      'post',
+      'put',
+      'delete',
+      'patch',
+      'options',
+      'head',
+    ];
+    let lastArg = args[args.length - 1];
+    let paths: string[] = [];
+
+    if (args.length === 0) {
+      paths = ['/**', '/'];
+    } else if (Array.isArray(lastArg)) {
+      verbs = lastArg;
+      // Need to loop because TS doesn't know if they're strings or arrays
+      for (const arg of args) {
+        if (typeof arg === 'string') {
+          paths.push(arg);
+        }
+      }
+    }
+
+    paths.forEach((path) => {
+      if (typeof path === 'function') {
+        // TODO: handle this case
+      } else {
+        let fullPath = this._getFullPath(path);
+        this.passthroughs.add(fullPath, verbs);
+      }
+    });
+  }
+
   start() {
     this.msw = setupWorker(...this.handlers);
 
     let logging = this.mirageConfig?.logging || false;
     this.msw.start({
       quiet: !logging,
+      onUnhandledRequest: (req) => {
+        const verb = req.method.toUpperCase();
+        const path = req.url.pathname;
+        const recognized = this.passthroughs
+          .retrieve(req.url.host)
+          ?.get(verb)
+          ?.recognize(path);
+        const match = recognized?.[0];
+
+        if (match) {
+          if (this.mirageServer?.shouldLog()) {
+            console.log(
+              `Mirage: Passthrough request for ${verb} ${req.url.href}`
+            );
+          }
+          // @ts-expect-error this seems to be an issue in msw types
+          req.passthrough();
+        } else if (this.mirageServer?.shouldLog()) {
+          let namespaceError = '';
+          if (this.namespace === '') {
+            namespaceError = 'There is no existing namespace defined.';
+          } else {
+            namespaceError = `The existing namespace is ${this.namespace}`;
+          }
+          console.warn(
+            `Mirage: Your app tried to ${verb} '${req.url.href}', but there was no route defined to handle this request. Add a passthrough or define a route for this endpoint in your routes() config.\nDid you forget to define a namespace? ${namespaceError}`
+          );
+        }
+      },
     });
   }
 
