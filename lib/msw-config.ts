@@ -1,9 +1,63 @@
-import { rest, setupWorker } from 'msw';
+import {
+  rest,
+  RestHandler,
+  setupWorker,
+  type RestRequest,
+  type SetupWorkerApi,
+} from 'msw';
+import type { Server } from 'miragejs';
+import type { RouteHandler, ServerConfig } from 'miragejs/server';
+import type { AnyFactories, AnyModels, AnyRegistry } from 'miragejs/-types';
+
+type RawHandler = RouteHandler<AnyRegistry> | {};
+
+type ResponseCode = number;
+
+/** code, headers, serialized response */
+type ResponseData = [ResponseCode, { [k: string]: string }, string | undefined];
+
+type HTTPVerb =
+  | 'get'
+  | 'put'
+  | 'post'
+  | 'patch'
+  | 'delete'
+  | 'options'
+  | 'head';
+
+type MirageServer = {
+  registerRouteHandler: (
+    verb: HTTPVerb,
+    path: string,
+    rawHandler?: RawHandler,
+    customizedCode?: ResponseCode,
+    options?: unknown
+  ) => (request: RestRequest) => ResponseData | PromiseLike<ResponseData>;
+  // TODO: strengthen
+  get?: Function;
+  post?: Function;
+  put?: Function;
+  delete?: Function;
+  del?: Function;
+  patch?: Function;
+  head?: Function;
+  options?: Function;
+};
+
+type RouteOptions = {
+  /** JSON-api option */
+  coalesce?: boolean;
+  /**
+   * Pretender treats a boolean timing option as "async", number as ms delay.
+   * TODO: Not sure what MSW does yet.
+   */
+  timing?: boolean | number;
+};
 
 const defaultRouteOptions = {
   coalesce: false,
   timing: undefined,
-};
+} satisfies RouteOptions;
 
 /**
  * Determine if the object contains a valid option.
@@ -13,7 +67,7 @@ const defaultRouteOptions = {
  * @return {Boolean} True if option is a valid option, false otherwise.
  * @private
  */
-function isOption(option) {
+function isOption(option: unknown): option is RouteOptions {
   if (!option || typeof option !== 'object') {
     return false;
   }
@@ -29,6 +83,22 @@ function isOption(option) {
   return false;
 }
 
+/** e.g. "/movies/:id" */
+type Shorthand = string;
+
+type RouteArgs =
+  | [RouteOptions]
+  | [Record<string, unknown>, ResponseCode]
+  | [Function, ResponseCode]
+  | [Shorthand, RouteOptions]
+  | [Shorthand, ResponseCode, RouteOptions];
+
+type RouteArguments = [
+  RawHandler | undefined,
+  ResponseCode | undefined,
+  RouteOptions,
+];
+
 /**
  * Extract arguments for a route.
  *
@@ -38,55 +108,75 @@ function isOption(option) {
  * @return {Array} [handler (i.e. the function, object or shorthand), code,
  * options].
  */
-function extractRouteArguments(args) {
-  let [lastArg] = args.splice(-1);
-  if (isOption(lastArg)) {
-    lastArg = assign({}, defaultRouteOptions, lastArg);
-  } else {
-    args.push(lastArg);
-    lastArg = defaultRouteOptions;
+function extractRouteArguments(args: RouteArgs): RouteArguments {
+  let result: RouteArguments = [undefined, undefined, {}];
+
+  for (const arg of args) {
+    if (isOption(arg)) {
+      result[2] = { ...defaultRouteOptions, ...arg };
+    } else if (typeof arg === 'number') {
+      result[1] = arg;
+    } else {
+      result[0] = arg;
+    }
   }
-  let t = 2 - args.length;
-  while (t-- > 0) {
-    args.push(undefined);
-  }
-  args.push(lastArg);
-  return args;
+  return result;
 }
 
 export default class MswConfig {
-  urlPrefix;
+  urlPrefix?: string;
 
-  namespace;
+  namespace?: string;
 
-  timing;
+  timing?: number;
 
-  msw;
+  msw?: SetupWorkerApi;
 
-  mirageServer;
+  mirageServer?: MirageServer;
 
-  mirageConfig;
+  mirageConfig?: ServerConfig<AnyModels, AnyFactories>;
 
-  handlers = [];
+  handlers: RestHandler[] = [];
 
-  create(mirageServer, mirageConfig) {
-    this.mirageServer = mirageServer;
+  // TODO: strengthen
+  get?: Function;
+  post?: Function;
+  put?: Function;
+  delete?: Function;
+  del?: Function;
+  patch?: Function;
+  head?: Function;
+  options?: Function;
+
+  create(
+    server: MirageServer,
+    mirageConfig: ServerConfig<AnyModels, AnyFactories>
+  ) {
+    this.mirageServer = server;
     this.mirageConfig = mirageConfig;
 
     this.config(mirageConfig);
 
-    [
-      ['get'],
-      ['post'],
-      ['put'],
-      ['delete', 'del'],
-      ['patch'],
-      ['head'],
-      ['options'],
-    ].forEach(([verb, alias]) => {
-      this[verb] = (path, ...args) => {
+    const verbs = [
+      ['get'] as const,
+      ['post'] as const,
+      ['put'] as const,
+      ['delete', 'del'] as const,
+      ['patch'] as const,
+      ['head'] as const,
+      ['options'] as const,
+    ];
+
+    verbs.forEach(([verb, alias]) => {
+      this[verb] = (path: string, ...args: RouteArgs) => {
         let [rawHandler, customizedCode, options] = extractRouteArguments(args);
-        let handler = mirageServer.registerRouteHandler(
+
+        // This assertion is for TypeScript, we don't expect it to happen
+        if (!this.mirageServer) {
+          throw new Error('Lost the mirageServer');
+        }
+
+        let handler = this.mirageServer.registerRouteHandler(
           verb,
           path,
           rawHandler,
@@ -95,13 +185,14 @@ export default class MswConfig {
         );
         let fullPath = this._getFullPath(path);
         let mswHandler = rest[verb](fullPath, async (req, res, ctx) => {
-          let queryParams = {};
+          let queryParams: Record<string, string | string[]> = {};
           req.url.searchParams.forEach((value, key) => {
+            let newValue: string | string[] = value;
             if (key.includes('[]')) {
               key = key.replace('[]', '');
-              value = [...(queryParams[key] || []), value];
+              newValue = [...(queryParams[key] || []), value];
             }
-            queryParams[key] = value;
+            queryParams[key] = newValue;
           });
           let request = Object.assign(req, {
             requestBody:
@@ -129,16 +220,16 @@ export default class MswConfig {
           this.handlers.push(mswHandler);
         }
       };
-      mirageServer[verb] = this[verb];
+      server[verb] = this[verb];
 
       if (alias) {
         this[alias] = this[verb];
-        mirageServer[alias] = this[verb];
+        server[alias] = this[verb];
       }
     });
   }
 
-  config(mirageConfig) {
+  config(mirageConfig: ServerConfig<AnyModels, AnyFactories>) {
     /**
      Sets a string to prefix all route handler URLs with.
 
@@ -204,7 +295,7 @@ export default class MswConfig {
    * @private
    * @hide
    */
-  _getFullPath(path) {
+  _getFullPath(path: string) {
     path = path[0] === '/' ? path.slice(1) : path;
     let fullPath = '';
     let urlPrefix = this.urlPrefix ? this.urlPrefix.trim() : '';
@@ -318,13 +409,13 @@ export default class MswConfig {
   start() {
     this.msw = setupWorker(...this.handlers);
 
-    let logging = this.mirageConfig.logging || false;
+    let logging = this.mirageConfig?.logging || false;
     this.msw.start({
       quiet: !logging,
     });
   }
 
   shutdown() {
-    this.msw.stop();
+    this.msw?.stop();
   }
 }
