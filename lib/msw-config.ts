@@ -6,11 +6,7 @@ import {
   type SetupWorkerApi,
 } from 'msw';
 import type { Server } from 'miragejs';
-import type {
-  HandlerOptions,
-  RouteHandler,
-  ServerConfig,
-} from 'miragejs/server';
+import type { RouteHandler, ServerConfig } from 'miragejs/server';
 import type { AnyFactories, AnyModels, AnyRegistry } from 'miragejs/-types';
 
 type RawHandler = RouteHandler<AnyRegistry> | {};
@@ -29,12 +25,23 @@ type HTTPVerb =
   | 'options'
   | 'head';
 
-type BaseHandler = (
-  path: string,
-  // TODO: infer registry
-  handler?: RouteHandler<AnyRegistry>,
-  options?: HandlerOptions
-) => void;
+/** e.g. "/movies/:id" */
+type Shorthand = string;
+
+type RouteArgs =
+  | [RouteOptions]
+  | [Record<string, unknown>, ResponseCode]
+  | [Function, ResponseCode]
+  | [Shorthand, RouteOptions]
+  | [Shorthand, ResponseCode, RouteOptions];
+
+type RouteArguments = [
+  RawHandler | undefined,
+  ResponseCode | undefined,
+  RouteOptions,
+];
+
+type BaseHandler = (path: string, ...args: RouteArgs) => void;
 
 type MirageServer = {
   registerRouteHandler: (
@@ -93,22 +100,6 @@ function isOption(option: unknown): option is RouteOptions {
   }
   return false;
 }
-
-/** e.g. "/movies/:id" */
-type Shorthand = string;
-
-type RouteArgs =
-  | [RouteOptions]
-  | [Record<string, unknown>, ResponseCode]
-  | [Function, ResponseCode]
-  | [Shorthand, RouteOptions]
-  | [Shorthand, ResponseCode, RouteOptions];
-
-type RouteArguments = [
-  RawHandler | undefined,
-  ResponseCode | undefined,
-  RouteOptions,
-];
 
 /**
  * Extract arguments for a route.
