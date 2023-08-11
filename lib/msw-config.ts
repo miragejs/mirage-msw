@@ -6,7 +6,11 @@ import {
   type SetupWorkerApi,
 } from 'msw';
 import type { Server } from 'miragejs';
-import type { RouteHandler, ServerConfig } from 'miragejs/server';
+import type {
+  HandlerOptions,
+  RouteHandler,
+  ServerConfig,
+} from 'miragejs/server';
 import type { AnyFactories, AnyModels, AnyRegistry } from 'miragejs/-types';
 
 type RawHandler = RouteHandler<AnyRegistry> | {};
@@ -25,6 +29,13 @@ type HTTPVerb =
   | 'options'
   | 'head';
 
+type BaseHandler = (
+  path: string,
+  // TODO: infer registry
+  handler?: RouteHandler<AnyRegistry>,
+  options?: HandlerOptions
+) => void;
+
 type MirageServer = {
   registerRouteHandler: (
     verb: HTTPVerb,
@@ -33,15 +44,15 @@ type MirageServer = {
     customizedCode?: ResponseCode,
     options?: unknown
   ) => (request: RestRequest) => ResponseData | PromiseLike<ResponseData>;
-  // TODO: strengthen
-  get?: Function;
-  post?: Function;
-  put?: Function;
-  delete?: Function;
-  del?: Function;
-  patch?: Function;
-  head?: Function;
-  options?: Function;
+
+  get?: BaseHandler;
+  post?: BaseHandler;
+  put?: BaseHandler;
+  delete?: BaseHandler;
+  del?: BaseHandler;
+  patch?: BaseHandler;
+  head?: BaseHandler;
+  options?: BaseHandler;
 };
 
 type RouteOptions = {
@@ -134,19 +145,19 @@ export default class MswConfig {
 
   mirageServer?: MirageServer;
 
+  // TODO: infer models and factories
   mirageConfig?: ServerConfig<AnyModels, AnyFactories>;
 
   handlers: RestHandler[] = [];
 
-  // TODO: strengthen
-  get?: Function;
-  post?: Function;
-  put?: Function;
-  delete?: Function;
-  del?: Function;
-  patch?: Function;
-  head?: Function;
-  options?: Function;
+  get?: BaseHandler;
+  post?: BaseHandler;
+  put?: BaseHandler;
+  delete?: BaseHandler;
+  del?: BaseHandler;
+  patch?: BaseHandler;
+  head?: BaseHandler;
+  options?: BaseHandler;
 
   create(
     server: MirageServer,
@@ -229,6 +240,7 @@ export default class MswConfig {
     });
   }
 
+  // TODO: infer models and factories
   config(mirageConfig: ServerConfig<AnyModels, AnyFactories>) {
     /**
      Sets a string to prefix all route handler URLs with.
