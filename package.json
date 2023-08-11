@@ -11,6 +11,7 @@
     "testing"
   ],
   "scripts": {
+    "build": "tsup lib/msw-config.ts --dts --format esm,cjs",
     "test": "yarn",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -21,7 +22,20 @@
     "miragejs": "^0.1.47",
     "msw": "^0.39.2",
     "prettier": "^3.0.1",
+    "tsup": "^7.2.0",
     "typescript": "^5.1.6"
+  },
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/msw-config.d.ts",
+        "default": "./dist/msw-config.js"
+      },
+      "require": {
+        "types": "./dist/msw-config.d.cts",
+        "default": "./dist/msw-config.cjs"
+      }
+    }
   },
   "peerDependancies": {
     "miragejs": "~0.1.43",
