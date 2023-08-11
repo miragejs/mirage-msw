@@ -9,8 +9,8 @@ devDependencies:
     specifier: ^1.0.2
     version: 1.0.2
   miragejs:
-    specifier: ~0.1.43
-    version: 0.1.43
+    specifier: ^0.1.47
+    version: 0.1.47
   msw:
     specifier: ^0.39.2
     version: 0.39.2
@@ -507,8 +507,8 @@ packages:
     engines: {node: '>=6'}
     dev: true
 
-  /miragejs@0.1.43:
-    resolution: {integrity: sha512-BhkyxssOZ2i4JqRjWpRnUQu9AFAKHyft8dJbqsg/N64+gCn2vw6vRteMpTKXllLjCPOA9Os8PhGRVXlXs4Ojhw==}
+  /miragejs@0.1.47:
+    resolution: {integrity: sha512-99tuCbIAlMhNhyF3s5d3+5/FdJ7O4jSq/5e3e+sDv7L8dZdwJuwutXe0pobJ7hm6yRChTDjK+Nn8dZZd175wbg==}
     engines: {node: 6.* || 8.* || >= 10.*}
     dependencies:
       '@miragejs/pretender-node-polyfill': 0.1.2
