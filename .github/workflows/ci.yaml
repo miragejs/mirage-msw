@@ -24,3 +24,5 @@ jobs:
         run: pnpm install
       - name: Run prettier
         run: pnpm format:check
+      - name: Check TypeScript
+        run: pnpm typecheck
