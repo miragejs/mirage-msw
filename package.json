@@ -18,6 +18,9 @@
     "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
+  "dependencies": {
+    "route-recognizer": "^0.3.4"
+  },
   "devDependencies": {
     "@tsconfig/recommended": "^1.0.2",
     "miragejs": "^0.1.47",
