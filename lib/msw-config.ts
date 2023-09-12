@@ -1,11 +1,6 @@
-import {
-  rest,
-  RestHandler,
-  setupWorker,
-  type RestRequest,
-  type SetupWorkerApi,
-} from 'msw';
-import type { Server } from 'miragejs';
+import { http, HttpHandler, HttpResponse, delay } from 'msw';
+import { setupWorker, type SetupWorker } from 'msw/browser';
+import type { Request } from 'miragejs';
 import type { RouteHandler, ServerConfig } from 'miragejs/server';
 import type { AnyFactories, AnyModels, AnyRegistry } from 'miragejs/-types';
 
@@ -50,7 +45,7 @@ type MirageServer = {
     rawHandler?: RawHandler,
     customizedCode?: ResponseCode,
     options?: unknown
-  ) => (request: RestRequest) => ResponseData | PromiseLike<ResponseData>;
+  ) => (request: Request) => ResponseData | PromiseLike<ResponseData>;
 
   get?: BaseHandler;
   post?: BaseHandler;
@@ -132,14 +127,14 @@ export default class MswConfig {
 
   timing?: number;
 
-  msw?: SetupWorkerApi;
+  msw?: SetupWorker;
 
   mirageServer?: MirageServer;
 
   // TODO: infer models and factories
   mirageConfig?: ServerConfig<AnyModels, AnyFactories>;
 
-  handlers: RestHandler[] = [];
+  handlers: HttpHandler[] = [];
 
   get?: BaseHandler;
   post?: BaseHandler;
@@ -186,35 +181,72 @@ export default class MswConfig {
           options
         );
         let fullPath = this._getFullPath(path);
-        let mswHandler = rest[verb](fullPath, async (req, res, ctx) => {
+        let mswHandler = http[verb](fullPath, async ({ request, params }) => {
           let queryParams: Record<string, string | string[]> = {};
-          req.url.searchParams.forEach((value, key) => {
-            let newValue: string | string[] = value;
-            if (key.includes('[]')) {
-              key = key.replace('[]', '');
-              newValue = [...(queryParams[key] || []), value];
+          const reqUrl = new URL(request.url);
+          for (const [paramKey, paramValue] of reqUrl.searchParams.entries()) {
+            let newValue: string | string[] = paramValue;
+            let newKey = paramKey;
+            if (newKey.includes('[]')) {
+              newKey = newKey.replace('[]', '');
+              newValue = [...(queryParams[newKey] || []), paramValue];
             }
-            queryParams[key] = newValue;
-          });
-          let request = Object.assign(req, {
-            requestBody:
-              typeof req.body === 'string'
-                ? req.body
-                : JSON.stringify(req.body),
-            queryParams: queryParams,
-          });
-          let [code, headers, response] = await handler(request);
-          if (code === 204) {
-            // MirageJS Incorrectly sets the body to "" on a 204.
-            response = undefined;
+            queryParams[newKey] = newValue;
           }
-          return res(ctx.status(code), ctx.delay(this.timing), (res) => {
-            res.body = response;
-            Object.entries(headers || {}).forEach(([key, value]) => {
-              res.headers.set(key, value);
-            });
-            return res;
+
+          // Determine how to process a request body
+          let requestBody: string = '';
+          const contentType =
+            request.headers?.get('content-type')?.toLowerCase() || '';
+          const hasJsonContent = contentType.includes('json');
+          if (hasJsonContent) {
+            requestBody = JSON.stringify(await request.json());
+          } else {
+            // This will parse multipart as text, which I think will work?  Should be tested
+            requestBody = await request.text();
+          }
+          const requestHeaders: Record<string, string> = {};
+          request.headers.forEach((v, k) => {
+            requestHeaders[k.toLowerCase()] = v;
           });
+
+          let req: Request = {
+            requestBody,
+            // @ts-expect-error this is fixed in an unreleased version of miragejs
+            queryParams,
+            requestHeaders,
+            // @ts-expect-error params can be an array, but mirage doesn't expect that
+            params,
+          };
+
+          let [status, headers, responseBody] = await handler(req);
+
+          if (status === 204) {
+            // MirageJS Incorrectly sets the body to "" on a 204.
+            responseBody = undefined;
+          }
+
+          const init = {
+            status,
+            headers,
+          };
+
+          // Delay the response if needed
+          if (this.timing) {
+            await delay(this.timing);
+          }
+
+          // Return the correct type of response based on the `accept` header
+          const accept = request.headers?.get('accept')?.toLowerCase() || '';
+          if (accept.includes('json')) {
+            return HttpResponse.json(responseBody, init);
+          } else if (accept.includes('text')) {
+            return HttpResponse.text(responseBody, init);
+          } else {
+            throw new Error(
+              `Mirage-msw: Only json and text responses are supported at this time.  Please open an issue requesting support for ${accept}.`
+            );
+          }
         });
         if (this.msw) {
           this.msw.use(mswHandler);
