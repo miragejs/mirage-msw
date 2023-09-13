@@ -11,7 +11,7 @@
     "testing"
   ],
   "scripts": {
-    "build": "tsup lib/msw-config.ts --dts --format esm,cjs",
+    "build": "tsup lib/msw-config.ts --dts --format=cjs,esm --platform=browser --external=msw",
     "test": "yarn",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
