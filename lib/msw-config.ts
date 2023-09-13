@@ -428,11 +428,11 @@ export default class MswConfig {
       paths = ['/**', '/'];
     } else if (Array.isArray(lastArg)) {
       verbs = lastArg;
-      // Need to loop because TS doesn't know if they're strings or arrays
-      for (const arg of args) {
-        if (typeof arg === 'string') {
-          paths.push(arg);
-        }
+    }
+    // Need to loop because TS doesn't know if they're strings or arrays
+    for (const arg of args) {
+      if (typeof arg === 'string') {
+        paths.push(arg);
       }
     }
 
