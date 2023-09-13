@@ -467,7 +467,13 @@ export default class MswConfig {
           }
           // @ts-expect-error this seems to be an issue in msw types
           req.passthrough();
-        } else if (this.mirageServer?.shouldLog()) {
+        }
+
+        // Log a warning for any requests for resources that aren't static assets of the page itself
+        else if (
+          req.url.host !== window.location.host &&
+          this.mirageServer?.shouldLog()
+        ) {
           let namespaceError = '';
           if (this.namespace === '') {
             namespaceError = 'There is no existing namespace defined.';
