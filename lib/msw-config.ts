@@ -4,6 +4,7 @@ import {
   setupWorker,
   type RestRequest,
   type SetupWorkerApi,
+  MockedRequest,
 } from 'msw';
 import PassthroughRegistry from './passthrough-registry';
 import type { Server } from 'miragejs';
@@ -136,6 +137,7 @@ export default class MswConfig {
   handlers: RestHandler[] = [];
 
   private passthroughs;
+  private passthroughChecks: ((req: MockedRequest) => boolean)[] = [];
 
   get?: BaseHandler;
   post?: BaseHandler;
@@ -436,7 +438,7 @@ export default class MswConfig {
 
     paths.forEach((path) => {
       if (typeof path === 'function') {
-        // TODO: handle this case
+        this.passthroughChecks.push(path);
       } else {
         let fullPath = this._getFullPath(path);
         this.passthroughs.add(fullPath, verbs);
@@ -453,13 +455,20 @@ export default class MswConfig {
       onUnhandledRequest: (req) => {
         const verb = req.method.toUpperCase();
         const path = req.url.pathname;
+
+        // Check passthrough functions
+        let shouldPassthrough = this.passthroughChecks.some(
+          (passthroughCheck) => passthroughCheck(req)
+        );
+
+        // Also check other passthroughs
         const recognized = this.passthroughs
           .retrieve(req.url.host)
           ?.get(verb)
           ?.recognize(path);
         const match = recognized?.[0];
 
-        if (match) {
+        if (shouldPassthrough || match) {
           if (this.mirageServer?.shouldLog()) {
             console.log(
               `Mirage: Passthrough request for ${verb} ${req.url.href}`
