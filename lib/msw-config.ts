@@ -6,6 +6,7 @@ import {
   type SetupWorkerApi,
   MockedRequest,
 } from 'msw';
+import { StartReturnType } from 'msw/lib/types/setupWorker/glossary';
 import PassthroughRegistry from './passthrough-registry';
 import type { Server } from 'miragejs';
 import type { HTTPVerb, RouteHandler, ServerConfig } from 'miragejs/server';
@@ -65,6 +66,10 @@ type RouteOptions = {
    * TODO: Not sure what MSW does yet.
    */
   timing?: boolean | number;
+};
+
+type SetupWorkerApiWithStartPromise = SetupWorkerApi & {
+  _startPromise: StartReturnType;
 };
 
 const defaultRouteOptions = {
@@ -127,7 +132,7 @@ export default class MswConfig {
 
   timing?: number;
 
-  msw?: SetupWorkerApi;
+  msw?: SetupWorkerApiWithStartPromise;
 
   mirageServer?: MirageServer;
 
@@ -447,10 +452,10 @@ export default class MswConfig {
   }
 
   start() {
-    this.msw = setupWorker(...this.handlers);
+    this.msw = setupWorker(...this.handlers) as SetupWorkerApiWithStartPromise;
 
     let logging = this.mirageConfig?.logging || false;
-    this.msw.start({
+    this.msw._startPromise = this.msw.start({
       quiet: !logging,
       onUnhandledRequest: (req) => {
         const verb = req.method.toUpperCase();
