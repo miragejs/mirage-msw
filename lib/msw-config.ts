@@ -201,10 +201,18 @@ export default class MswConfig {
             request.headers?.get('content-type')?.toLowerCase() || '';
           const hasJsonContent = contentType.includes('json');
           if (hasJsonContent) {
-            requestBody = JSON.stringify(await request.json());
+            try {
+              requestBody = JSON.stringify(await request.json());
+            } catch (e: unknown) {
+              // Just because a content-type is set, doesn't mean it will actually have a body
+            }
           } else {
             // This will parse multipart as text, which I think will work?  Should be tested
-            requestBody = await request.text();
+            try {
+              requestBody = await request.text();
+            } catch (e: unknown) {
+              // Just because a content-type is set, doesn't mean it will actually have a body
+            }
           }
           const requestHeaders: Record<string, string> = {};
           request.headers.forEach((v, k) => {
