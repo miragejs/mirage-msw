@@ -248,7 +248,7 @@ export default class MswConfig {
           // Return the correct type of response based on the `accept` header
           const accept = request.headers?.get('accept')?.toLowerCase() || '';
           if (accept.includes('json')) {
-            return HttpResponse.json(responseBody, init);
+            return HttpResponse.json(JSON.parse(responseBody || '{}'), init);
           } else if (accept.includes('text')) {
             return HttpResponse.text(responseBody, init);
           } else {
