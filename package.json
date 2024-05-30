@@ -24,7 +24,7 @@
   "devDependencies": {
     "@tsconfig/recommended": "^1.0.2",
     "miragejs": "^0.1.47",
-    "msw": "0.0.0-fetch.rc-19",
+    "msw": "2.3.0",
     "prettier": "^3.0.1",
     "tsup": "^7.2.0",
     "typescript": "^5.1.6"
@@ -43,7 +43,7 @@
   },
   "peerDependancies": {
     "miragejs": "~0.1.43",
-    "msw": "^0.0.0-fetch.rc-16"
+    "msw": "^2.0.0"
   },
   "author": "Brian Gantzler",
   "license": "MIT",
