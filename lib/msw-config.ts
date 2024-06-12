@@ -543,5 +543,6 @@ export default class MswConfig {
 
   shutdown() {
     this.msw?.stop();
+    this.msw = undefined;
   }
 }
