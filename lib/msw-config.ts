@@ -250,14 +250,19 @@ export default class MswConfig {
 
           // Return the correct type of response based on the `accept` header
           const accept = request.headers?.get('accept')?.toLowerCase() || '';
-          if (accept.includes('json')) {
-            return HttpResponse.json(JSON.parse(responseBody || '{}'), init);
+          if (!responseBody) {
+            return new HttpResponse(null, init);
+          } else if (accept.includes('json')) {
+            return HttpResponse.json(JSON.parse(responseBody), init);
           } else if (accept.includes('text')) {
             return HttpResponse.text(responseBody, init);
           } else {
-            throw new Error(
-              `Mirage-msw: Only json and text responses are supported at this time.  Please open an issue requesting support for ${accept}.`
-            );
+            try {
+              const json = JSON.parse(responseBody);
+              return HttpResponse.json(json, init);
+            } catch (e) {
+              return HttpResponse.text(responseBody, init);
+            }
           }
         });
         if (this.msw) {
