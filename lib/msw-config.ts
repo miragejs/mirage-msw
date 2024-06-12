@@ -492,7 +492,7 @@ export default class MswConfig {
     this.msw = setupWorker(...this.handlers);
 
     let logging = this.mirageConfig?.logging || false;
-    this.msw.start({
+    return this.msw.start({
       quiet: !logging,
       onUnhandledRequest: (req) => {
         const verb = req.method.toUpperCase();
