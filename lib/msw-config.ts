@@ -244,9 +244,9 @@ export default class MswConfig {
           };
 
           // Delay the response if needed
-          if (this.timing) {
-            await delay(this.timing);
-          }
+          await delay(
+            typeof options.timing === 'number' ? options.timing : this.timing
+          );
 
           // Return the correct type of response based on the `accept` header
           const accept = request.headers?.get('accept')?.toLowerCase() || '';
@@ -277,6 +277,27 @@ export default class MswConfig {
 
   // TODO: infer models and factories
   config(mirageConfig: ServerConfig<AnyModels, AnyFactories>) {
+    /**
+     Set the number of milliseconds for the the Server's response time.
+
+     By default there's a 400ms delay during development, and 0 delay in testing (so your tests run fast).
+
+     ```js
+     createServer({
+        routes() {
+          this.timing = 400; // default
+        }
+      })
+     ```
+
+     To set the timing for individual routes, see the `timing` option for route handlers.
+
+     @property timing
+     @type Number
+     @public
+     */
+    this.timing = mirageConfig.timing ?? 400;
+
     /**
      Sets a string to prefix all route handler URLs with.
 
