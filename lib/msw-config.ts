@@ -517,8 +517,9 @@ export default class MswConfig {
               `Mirage: Passthrough request for ${verb} ${requestUrl.href}`
             );
           }
-          // @ts-expect-error this seems to be an issue in msw types
-          req.passthrough();
+
+          // Passthroughs in msw use an early return
+          return;
         }
 
         // Log a warning for any requests for resources that aren't static assets of the page itself
