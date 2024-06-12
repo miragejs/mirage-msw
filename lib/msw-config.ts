@@ -153,6 +153,9 @@ export default class MswConfig {
     this.mirageServer = server;
     this.mirageConfig = mirageConfig;
 
+    // Reset handlers
+    this.handlers = [];
+
     this.config(mirageConfig);
 
     const verbs = [
