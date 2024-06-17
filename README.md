@@ -6,17 +6,15 @@ Experimental [MirageJS](https://miragejs.com/) interceptor using [MSW](https://m
 
 ### Installation
 
-Pick one depending on your package manager:
+Pick one depending on your package manager. Mirage `0.2.0-alpha.1+` and MSW `2.0.0+` are peer dependencies.
 
 ```shell
-npm i --save-dev mirage-msw
-pnpm i --save-dev mirage-msw
-yarn add --dev mirage-msw
+npm i --save-dev mirage-msw mirage@^0.2.0-alpha.1 msw@^2
+pnpm i --save-dev mirage-msw mirage@^0.2.0-alpha.1 msw@^2
+yarn add --dev mirage-msw mirage@^0.2.0-alpha.1 msw@^2
 ```
 
-If you are not already using MSW or Mirage, you will need to install those as well. Be sure to run [`msw init`](https://mswjs.io/docs/integrations/browser#copy-the-worker-script) as well.
-
-We currently only support MSW v1, though we are exploring v2 support: https://github.com/miragejs/mirage-msw/pull/12
+Be sure to run [`msw init`](https://mswjs.io/docs/integrations/browser#copy-the-worker-script) as well, if you haven't previously.
 
 ### Configuration
 
@@ -26,7 +24,7 @@ Wherever you are creating your miragejs server, set the interceptor:
 import MSWInterceptor from 'mirage-msw';
 import { createServer } from 'miragejs';
 
-createServer({
+await createServer({
   interceptor: new MSWInterceptor(),
   // ... rest of your config
 });
@@ -40,6 +38,6 @@ This is very early, experimental software. There are probably a lot of bugs, so 
 
 Here are the known issues so far:
 
-- [ ] MSW starts up asynchronously, whereas Mirage up to now has always been completely synchronous. We will probably need to make a breaking change to Mirage to make `createServer` an async function.
+- [x] MSW starts up asynchronously, whereas Mirage up to now has always been completely synchronous. We will probably need to make a breaking change to Mirage to make `createServer` an async function. (Added in mirage 0.2.0-alpha.1)
 - [ ] Currently no support for FormData requests.
-- [ ] Only works in the browser, same as pretender. But MSW does have an option for node.js, so we may be able to support that in the future.
+- [ ] Only works in the browser, same as pretender. But MSW does have an option for node.js, so we may be able to support that in the future. (https://github.com/miragejs/mirage-msw/issues/17)
