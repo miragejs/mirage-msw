@@ -224,7 +224,6 @@ export default class MswConfig {
 
           let req: Request = {
             requestBody,
-            // @ts-expect-error this is fixed in an unreleased version of miragejs
             queryParams,
             requestHeaders,
             // @ts-expect-error params can be an array, but mirage doesn't expect that
