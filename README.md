@@ -39,5 +39,5 @@ This is very early, experimental software. There are probably a lot of bugs, so 
 Here are the known issues so far:
 
 - [x] MSW starts up asynchronously, whereas Mirage up to now has always been completely synchronous. We will probably need to make a breaking change to Mirage to make `createServer` an async function. (Added in mirage 0.2.0-alpha.1)
-- [ ] Currently no support for FormData requests.
+- [x] Currently no support for FormData requests.
 - [ ] Only works in the browser, same as pretender. But MSW does have an option for node.js, so we may be able to support that in the future. (https://github.com/miragejs/mirage-msw/issues/17)
