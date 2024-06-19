@@ -9,8 +9,12 @@ type RawHandler = RouteHandler<AnyRegistry> | {};
 
 type ResponseCode = number;
 
-/** code, headers, serialized response */
-type ResponseData = [ResponseCode, { [k: string]: string }, string | undefined];
+/** code, headers, response body */
+type ResponseData = [
+  ResponseCode,
+  { [k: string]: string },
+  string | BodyInit | undefined,
+];
 
 /** e.g. "/movies/:id" */
 type Shorthand = string;
@@ -249,19 +253,25 @@ export default class MswConfig {
 
           // Return the correct type of response based on the `accept` header
           const accept = request.headers?.get('accept')?.toLowerCase() || '';
+
           if (!responseBody) {
             return new HttpResponse(null, init);
-          } else if (accept.includes('json')) {
-            return HttpResponse.json(JSON.parse(responseBody), init);
-          } else if (accept.includes('text')) {
-            return HttpResponse.text(responseBody, init);
-          } else {
-            try {
-              const json = JSON.parse(responseBody);
-              return HttpResponse.json(json, init);
-            } catch (e) {
+          } else if (typeof responseBody === 'string') {
+            if (accept.includes('json')) {
+              return HttpResponse.json(JSON.parse(responseBody), init);
+            } else if (accept.includes('text')) {
               return HttpResponse.text(responseBody, init);
+            } else {
+              try {
+                const json = JSON.parse(responseBody);
+                return HttpResponse.json(json, init);
+              } catch (e) {
+                return HttpResponse.text(responseBody, init);
+              }
             }
+          } else {
+            // Could be a ReadableStream, Blob, ArrayBuffer, etc.
+            return new HttpResponse(responseBody, init);
           }
         });
         if (this.msw) {
