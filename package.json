@@ -23,7 +23,7 @@
   },
   "devDependencies": {
     "@tsconfig/recommended": "^1.0.2",
-    "miragejs": "^0.2.0-alpha.1",
+    "miragejs": "^0.2.0-alpha.3",
     "msw": "2.3.0",
     "prettier": "^3.0.1",
     "tsup": "^7.2.0",
@@ -42,7 +42,7 @@
     }
   },
   "peerDependancies": {
-    "miragejs": ">=0.2.0-alpha.1",
+    "miragejs": ">=0.2.0-alpha.3",
     "msw": "^2.0.0"
   },
   "author": "Brian Gantzler",

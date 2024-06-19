@@ -14,8 +14,8 @@ devDependencies:
     specifier: ^1.0.2
     version: 1.0.2
   miragejs:
-    specifier: ^0.2.0-alpha.1
-    version: 0.2.0-alpha.1
+    specifier: ^0.2.0-alpha.3
+    version: 0.2.0-alpha.3
   msw:
     specifier: 2.3.0
     version: 2.3.0(typescript@5.1.6)
@@ -832,8 +832,8 @@ packages:
       brace-expansion: 1.1.11
     dev: true
 
-  /miragejs@0.2.0-alpha.1:
-    resolution: {integrity: sha512-09/a0NU6yPRmn3tzUsnpTUjZG20NV0IprEJko2YVhX39HUOHMLaDC6HXpGnVDX8WyyOQG3UrRUcviHBZa2X+7A==}
+  /miragejs@0.2.0-alpha.3:
+    resolution: {integrity: sha512-rcfnEUoOj5NP9xgUTctazWQIyN3ZpB/Wm/pEewLtPOhpDfl4M1kdE9R12IywxJkTtvt0qbx3GrMrF9SncWz0VA==}
     dependencies:
       '@miragejs/pretender-node-polyfill': 0.1.2
       inflected: 2.1.0
