@@ -9,9 +9,9 @@ Experimental [MirageJS](https://miragejs.com/) interceptor using [MSW](https://m
 Pick one depending on your package manager. Mirage `0.2.0-alpha.3+` and MSW `2.0.0+` are peer dependencies.
 
 ```shell
-npm i --save-dev mirage-msw mirage@^0.2.0-alpha.3 msw@^2
-pnpm i --save-dev mirage-msw mirage@^0.2.0-alpha.3 msw@^2
-yarn add --dev mirage-msw mirage@^0.2.0-alpha.3 msw@^2
+npm i --save-dev mirage-msw miragejs@^0.2.0-alpha.3 msw@^2
+pnpm i --save-dev mirage-msw miragejs@^0.2.0-alpha.3 msw@^2
+yarn add --dev mirage-msw miragejs@^0.2.0-alpha.3 msw@^2
 ```
 
 Be sure to run [`msw init`](https://mswjs.io/docs/integrations/browser#copy-the-worker-script) as well, if you haven't previously.
